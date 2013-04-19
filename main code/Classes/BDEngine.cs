@@ -150,7 +150,8 @@ public class engineBD
     {
         try
         {
-            connection.Close();
+            if (connection.Ping() == true)
+                connection.Close();
             return true;
         }
         catch(Exception ex)
@@ -171,7 +172,7 @@ public class engineBD
     /// </returns>
     public string[] takeValue(string columnName, string conditionColumnName, string condition)
     {
-        string[] result;
+        string[] result = new string[0];
         MySqlDataReader dataReader = null;
         try
         {
@@ -185,11 +186,14 @@ public class engineBD
                                     condition + "'";
                     MySqlCommand cmd = new MySqlCommand(query, connection);
                     dataReader = cmd.ExecuteReader();
-                    result = new string[dataReader.FieldCount];
-                    for (int i = 0; i < result.Length; i++)
+                    if (dataReader.HasRows == true)
                     {
-                        dataReader.Read();
-                        result[i] = dataReader[columnName].ToString();
+                        result = new string[dataReader.FieldCount];
+                        for (int i = 0; i < result.Length; i++)
+                        {
+                            dataReader.Read();
+                            result[i] = dataReader[columnName].ToString();
+                        }
                     }
                     dataReader.Close();
                     CloseConnection();

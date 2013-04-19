@@ -43,7 +43,6 @@ class Program
         clientScktEngine.mutex = mtx;
         try
         {
-            string name = "default";
             my myC = new my();
             while (true) //Пока не нажата клавиша
             {
@@ -55,41 +54,31 @@ class Program
                     switch (message)
                     {
                         case "registration":
-                            clientScktEngine.sendMessage("login");
-                            string login = clientScktEngine.receiveMessage();
                             try
                             {
-                                string[] loginCheck = myBD.takeValue("password", "login", login);
+                                clientScktEngine.sendMessage("ready to registration");
+                                currentUser.Receive(clientScktEngine.socket);
+                                string[] loginCheck = myBD.takeValue("password", "login", currentUser.login);
                                 if (loginCheck.Length == 0)
                                 {
-                                    clientScktEngine.sendMessage("pwd");
-                                    string pwd = clientScktEngine.receiveMessage();
-                                    if (myBD.addValue(login, myCrypt.EncryptStringAES(pwd, login)) == true)
-                                        clientScktEngine.sendMessage("success");
+                                    if (myBD.addValue(currentUser.login, myCrypt.EncryptStringAES(currentUser.password, currentUser.login)) == true)
+                                        clientScktEngine.sendMessage("successfully registration");
                                     else
                                     {
-                                        clientScktEngine.sendMessage("failed");
-                                        if (clientScktEngine.receiveMessage().Contains("why"))
-                                            clientScktEngine.sendMessage("Ошибка добавления данных в базу. Проверьте сетевое подключение");
+                                        clientScktEngine.sendMessage("Error when adding data to BD. Check your connection");
                                     }
-                                    clientScktEngine.sendMessage("end");
                                 }
                                 else
                                 {
-                                    clientScktEngine.sendMessage("failed");
-                                    if (clientScktEngine.receiveMessage().Contains("why"))
-                                        clientScktEngine.sendMessage("Такой логин уже существует.");
-                                    clientScktEngine.sendMessage("end");
+                                    clientScktEngine.sendMessage("This login is already exist");
                                 }
                             }
-                            catch
+                            catch(Exception ex)
                             {
-                                clientScktEngine.sendMessage("failed");
-                                if (clientScktEngine.receiveMessage().Contains("why"))
-                                    clientScktEngine.sendMessage("Такой логин уже существует.");
-                                clientScktEngine.sendMessage("end");
+                                clientScktEngine.sendMessage(ex.Message);
                             }
-                            break;
+                        break;
+
                         case "accept user":
                             try
                             {
@@ -103,6 +92,7 @@ class Program
                                 clientScktEngine.sendMessage(ex.Message);
                             }
                         break;
+
                         case "check user":
                             try
                             {
@@ -113,6 +103,8 @@ class Program
                                     {
                                         currentUser.checkUser = true;
                                         currentUser.priveleges = Convert.ToInt32(myBD.takeValue("privileges", "login", currentUser.login)[0]);
+                                        if (Directory.Exists(currentUser.login + "/TEMP") == false)
+                                            Directory.CreateDirectory(currentUser.login + "/TEMP");
                                     }
                                     else
                                     {
@@ -134,29 +126,7 @@ class Program
                             }
 
                         break;
-                        case "connect":
-                            clientScktEngine.sendMessage("name");
-                            name = clientScktEngine.receiveMessage();
-                            try
-                            {
-                                if (Directory.Exists(name) == false)
-                                    Directory.CreateDirectory(name);
-                            }
-                            catch
-                            {
-                                Directory.CreateDirectory("default");
-                                name = "default";
-                            }
-                            if (Directory.Exists(name + "/TEMP") == false)
-                                Directory.CreateDirectory(name + "/TEMP");
-                            myC.updateMiniatures(name, clientScktEngine);
-                            string[] takePrivileges = myBD.takeValue("privileges", "login", name);
-                            clientScktEngine.sendMessage("privileges");
-                            clientScktEngine.receiveMessage();
-                            clientScktEngine.sendMessage(takePrivileges[0].ToString());
-                            clientScktEngine.receiveMessage();
-                            clientScktEngine.sendMessage("connected");
-                            break;
+                     
                         case "delete":
                             clientScktEngine.sendMessage("ready to delete files");
                             int days = Convert.ToInt32(clientScktEngine.receiveMessage());
@@ -167,7 +137,7 @@ class Program
                                 {
                                     string[] fileInfos = new string[] { "" };
                                     Console.WriteLine(Path.GetFileName(dirName));
-                                    takePrivileges = myBD.takeValue("privileges", "login", Path.GetFileName(dirName));
+                                    string[] takePrivileges = myBD.takeValue("privileges", "login", Path.GetFileName(dirName));
                                     if (takePrivileges.Length > 0)
                                     {
                                         try
@@ -215,46 +185,13 @@ class Program
                                 if (clientScktEngine.receiveMessage().Contains("why"))
                                     clientScktEngine.sendMessage(ex.Message);
                             }
-                            break;
-                        case "authentication":
-                            clientScktEngine.sendMessage("login");
-                            login = clientScktEngine.receiveMessage();
-                            clientScktEngine.sendMessage("password");
-                            string password = clientScktEngine.receiveMessage();
-                            try
-                            {
-                                string[] loginCheck = myBD.takeValue("password", "login", login);
-                                if (loginCheck.Length > 0)
-                                {
-                                    if (password == myCrypt.DecryptStringAES(loginCheck[0], login))
-                                        clientScktEngine.sendMessage("confirmed");
-                                    else
-                                    {
-                                        clientScktEngine.sendMessage("failed");
-                                        if (clientScktEngine.receiveMessage().Contains("why"))
-                                            clientScktEngine.sendMessage("Wrong password or login");
-                                    }
-                                }
-                                else
-                                {
-                                    clientScktEngine.sendMessage("failed");
-                                    if (clientScktEngine.receiveMessage().Contains("why"))
-                                        clientScktEngine.sendMessage("Wrong password or login");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                clientScktEngine.sendMessage("failed");
-                                if (clientScktEngine.receiveMessage().Contains("why"))
-                                    clientScktEngine.sendMessage(ex.Message);
-                            }
-                            break;
+                        break;
                         case "file list":
                             clientScktEngine.sendMessage("miniatures");
                             if (clientScktEngine.receiveMessage().Contains("ready to obtain miniatures"))
                                 myC.updateMiniatures(currentUser.login, clientScktEngine);
                             clientScktEngine.sendMessage("end");
-                            string[] fils = Directory.GetFiles(name);
+                            string[] fils = Directory.GetFiles(currentUser.login);
                             int count = 0;
                             foreach (string fl in fils)
                                 if (Path.GetExtension(fl).Contains("finf") == false &&
@@ -331,7 +268,7 @@ class Program
                             {
                                 MessageBox.Show(ex.Message);
                             }
-                            myC.generatePreview(currentUser.login + "/" + fileName, name);
+                            myC.generatePreview(currentUser.login + "/" + fileName, currentUser.login);
                             FileInfo fileInf = new FileInfo(currentUser.login + "/" + fileName);
                             fileInf.LastAccessTime = DateTime.Now;
                             break;

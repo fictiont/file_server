@@ -15,22 +15,6 @@ public class socketEngine
 
     #endregion
 
-    #region private functions
-
-        private void ConsoleWrite(string stringToWrite)
-        {
-            if (mtx != null)
-            {
-                mtx.WaitOne();
-                Console.WriteLine(stringToWrite);
-                mtx.ReleaseMutex();
-            }
-            else
-                throw new ArgumentException("Specify a mutex please");
-        }
-
-    #endregion
-
     #region public variables
 
         /// <summary>
@@ -80,6 +64,18 @@ public class socketEngine
     #endregion
 
     #region public functions
+
+        public void ConsoleWrite(string stringToWrite)
+        {
+            if (mtx != null)
+            {
+                mtx.WaitOne();
+                Console.WriteLine(stringToWrite);
+                mtx.ReleaseMutex();
+            }
+            else
+                throw new ArgumentException("Specify a mutex please");
+        }
 
         ~socketEngine()
         {
@@ -174,8 +170,8 @@ public class socketEngine
         /// </returns>
         public string receiveMessage()
         {
-            string result = "";
-            if (s.Poll(-1, SelectMode.SelectRead) == true)
+            string result = String.Empty;
+            if (s.Poll(3000000, SelectMode.SelectRead) == true)
             {
                 if (s.Available == 0)
                     return result;
@@ -207,7 +203,7 @@ public class socketEngine
         /// </param>
         public void sendMessage(string message)
         {
-            if (s.Poll(-1, SelectMode.SelectWrite) == true)
+            if (s.Poll(3000000, SelectMode.SelectWrite) == true)
             {
                 int messageLength = -1;
                 try

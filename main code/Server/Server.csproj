@@ -50,7 +50,7 @@
     <Compile Include="Server.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Classes\Classes.csproj">
+    <ProjectReference Include="..\Classes\Classes.csproj">
       <Project>{EB94F806-9E17-45D8-987B-A969945B1622}</Project>
       <Name>Classes</Name>
     </ProjectReference>

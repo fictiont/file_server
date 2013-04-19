@@ -35,6 +35,8 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Runtime.Serialization.Formatters.Soap" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -44,7 +46,8 @@
   <ItemGroup>
     <Compile Include="captchaEngine.cs" />
     <Compile Include="cryptEngine.cs" />
-    <Compile Include="BDEngine.cs" />
+    <Compile Include="totalMemoryAndClasses.cs" />
+    <Compile Include="BDengine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="socketEngine.cs" />
   </ItemGroup>
