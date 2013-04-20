@@ -43,8 +43,7 @@ class Program
         clientScktEngine.mutex = mtx;
         try
         {
-            my myC = new my();
-            while (true) //Пока не нажата клавиша
+            while (true)
             {
                 if (clientScktEngine.socket.Available != 0)
                 {
@@ -57,7 +56,7 @@ class Program
                             try
                             {
                                 clientScktEngine.sendMessage("ready to registration");
-                                currentUser.Receive(clientScktEngine.socket);
+                                currentUser.Receive(clientScktEngine);
                                 string[] loginCheck = myBD.takeValue("password", "login", currentUser.login);
                                 if (loginCheck.Length == 0)
                                 {
@@ -83,9 +82,8 @@ class Program
                             try
                             {
                                 clientScktEngine.sendMessage("ready to accept user");
-                                currentUser.Receive(clientScktEngine.socket);
+                                currentUser.Receive(clientScktEngine);
                                 clientScktEngine.sendMessage("successfully accept user");
-                                clientScktEngine.ConsoleWrite(currentUser.password);
                             }
                             catch (Exception ex)
                             {
@@ -118,7 +116,8 @@ class Program
                                     currentUser.status = ("Wrong password or login");
                                 }
                                 clientScktEngine.sendMessage("take user info");
-                                currentUser.Send(clientScktEngine.socket);
+                                if (clientScktEngine.receiveMessage().CompareTo("ready to take") == 0)
+                                    currentUser.Send(clientScktEngine);
                             }
                             catch (Exception ex)
                             {
@@ -136,7 +135,6 @@ class Program
                                 foreach (string dirName in dirs)
                                 {
                                     string[] fileInfos = new string[] { "" };
-                                    Console.WriteLine(Path.GetFileName(dirName));
                                     string[] takePrivileges = myBD.takeValue("privileges", "login", Path.GetFileName(dirName));
                                     if (takePrivileges.Length > 0)
                                     {
@@ -173,7 +171,6 @@ class Program
                                     }
                                     else
                                     {
-                                        Console.WriteLine("To delete: " + dirName);
                                         DirectoryInfo dir = new DirectoryInfo(dirName);
                                         dir.Delete(true);
                                     }
@@ -186,53 +183,44 @@ class Program
                                     clientScktEngine.sendMessage(ex.Message);
                             }
                         break;
+                        case "miniatures":
+                        try
+                        {
+                            miniatures minis = new miniatures();
+                            minis.updateMiniatures(currentUser.login);
+                            clientScktEngine.sendMessage("take miniatures");
+                            if (clientScktEngine.receiveMessage().CompareTo("start to take") == 0)
+                            {
+                                minis.sendMiniatures(clientScktEngine);
+                                clientScktEngine.sendMessage("successfully sended");
+                            }
+                            else
+                                clientScktEngine.sendMessage("error when updating miniatures");
+                        }
+                        catch (Exception ex)
+                        {
+                            clientScktEngine.sendMessage(ex.Message);
+                        }
+                        break;
                         case "file list":
-                            clientScktEngine.sendMessage("miniatures");
-                            if (clientScktEngine.receiveMessage().Contains("ready to obtain miniatures"))
-                                myC.updateMiniatures(currentUser.login, clientScktEngine);
-                            clientScktEngine.sendMessage("end");
-                            string[] fils = Directory.GetFiles(currentUser.login);
-                            int count = 0;
-                            foreach (string fl in fils)
-                                if (Path.GetExtension(fl).Contains("finf") == false &&
-                                    Path.GetExtension(fl).Contains("smll") == false)
-                                    count++;
-                            string[] files = new string[count];
-                            count = 0;
-                            foreach (string fl in fils)
-                                if (Path.GetExtension(fl).Contains("finf") == false &&
-                                    Path.GetExtension(fl).Contains("smll") == false)
+                            try
+                            {
+                                files filesS = new files();
+                                filesS.updateFileList(currentUser.login);
+                                clientScktEngine.sendMessage("take file list");
+                                if (clientScktEngine.receiveMessage().CompareTo("ready to receive") == 0)
                                 {
-                                    files[count] = fl;
-                                    count++;
+                                    filesS.sendFileList(clientScktEngine);
+                                    clientScktEngine.sendMessage("successfull file list");
                                 }
-                            clientScktEngine.receiveMessage();
-                            clientScktEngine.sendMessage("file list");
-                            if (clientScktEngine.receiveMessage().Contains("length"))
-                                clientScktEngine.sendMessage(files.Length.ToString());
-                            if (clientScktEngine.receiveMessage().Contains("files"))
-                                for (int i = 0; i < files.Length; i++)
-                                {
-                                    files[i] = Path.GetFileName(files[i]);
-
-                                    if (File.Exists(currentUser.login + "/TEMP/" + Path.GetFileName(files[i]) + ".finf") == false)
-                                    {
-                                        clientScktEngine.sendMessage("0");
-                                    }
-                                    else
-                                    {
-                                        Byte[] bt = new Byte[4];
-                                        FileStream fl = File.OpenRead(currentUser.login + "/TEMP/" + Path.GetFileName(files[i]) + ".finf");
-                                        fl.Read(bt, 0, 4);
-                                        clientScktEngine.sendMessage(Encoding.UTF8.GetString(bt));
-                                        fl.Close();
-                                    }
-                                    if (clientScktEngine.receiveMessage().Contains("file name"))
-                                        clientScktEngine.sendMessage(files[i]);
-                                    if (clientScktEngine.receiveMessage().Contains("OK"))
-                                        continue;
-                                }
-                            break;
+                                else
+                                    clientScktEngine.sendMessage("failed to update file list");
+                            }
+                            catch (Exception ex)
+                            {
+                                clientScktEngine.sendMessage("Error when updating file list: " + ex.Message);
+                            }
+                        break;
                         case "disconnect":
                             Thread.CurrentThread.Abort();
                             break;
@@ -268,7 +256,6 @@ class Program
                             {
                                 MessageBox.Show(ex.Message);
                             }
-                            myC.generatePreview(currentUser.login + "/" + fileName, currentUser.login);
                             FileInfo fileInf = new FileInfo(currentUser.login + "/" + fileName);
                             fileInf.LastAccessTime = DateTime.Now;
                             break;
@@ -340,99 +327,4 @@ class Program
         }
     }
 
-}
-class my
-{
-    public int BLOCK_SIZE = 2048;
-    public void updateMiniatures(string name, socketEngine clientScktEngine)
-    {
-        string[] files = Directory.GetFiles(name);
-        int count = 0;
-        foreach (string str in files)
-        {
-            if (File.Exists(str + ".smll") == false)
-            {
-                count += generatePreview(str, name);
-            }
-            else
-                count++;
-        }
-        clientScktEngine.sendMessage("count");
-        clientScktEngine.receiveMessage();
-        clientScktEngine.sendMessage(count.ToString());
-        clientScktEngine.receiveMessage();
-        files = Directory.GetFiles(name + "/TEMP/");
-        foreach (string str in files)
-            if (Path.GetExtension(str).Contains(".smll"))
-            {
-                string strr = str;
-                clientScktEngine.sendMessage("miniature");
-                if (clientScktEngine.receiveMessage().Contains("name"))
-                    clientScktEngine.sendMessage(strr);
-                FileStream fl = File.OpenRead(strr);
-                if (clientScktEngine.receiveMessage().Contains("length"))
-                    clientScktEngine.sendMessage(fl.Length.ToString());
-                if (clientScktEngine.receiveMessage().Contains("file"))
-                {
-                    for (long i = 0; i < fl.Length; i += BLOCK_SIZE)
-                    {
-                        Byte[] bt = new Byte[BLOCK_SIZE];
-                        fl.Read(bt, 0, BLOCK_SIZE);
-                        clientScktEngine.socket.Send(bt, 0, BLOCK_SIZE, SocketFlags.None);
-                    }
-                }
-                fl.Close();
-            }
-    }
-
-    public int generatePreview(string fileName, string name)
-    {
-        string extension = Path.GetExtension(fileName).ToLower();
-        if (extension.Contains(".bmp") || extension.Contains(".jpg") ||
-            extension.Contains(".jpeg") || extension.Contains(".png"))
-        {
-            Bitmap imageToConv = new Bitmap(fileName);
-            int newHeight = 0;
-            int newWidth = 0;
-            if (imageToConv.Height == imageToConv.Width)
-            {
-                newHeight = 234; newWidth = 234;
-            }
-            if (imageToConv.Height > imageToConv.Width)
-            {
-                if (imageToConv.Height > 234 && imageToConv.Width > 365)
-                {
-                    newHeight = 234;
-                    newWidth = (int)(imageToConv.Width / ((float)imageToConv.Height / 234));
-                }
-                else
-                {
-                    newHeight = imageToConv.Height; newWidth = imageToConv.Width;
-                }
-            }
-            if (imageToConv.Width > imageToConv.Height)
-            {
-                if (imageToConv.Height > 234 && imageToConv.Width > 365)
-                {
-                    newWidth = 365;
-                    newHeight = (int)(imageToConv.Height / ((float)imageToConv.Width / 365));
-                }
-                else
-                {
-                    newHeight = imageToConv.Height; newWidth = imageToConv.Width;
-                }
-            }
-
-            Bitmap bm = new Bitmap(imageToConv, newWidth, newHeight);
-            if (fileName.ToLower().Contains(".bmp"))
-                bm.Save(name + "/TEMP/" + Path.GetFileName(fileName) + ".smll", System.Drawing.Imaging.ImageFormat.Bmp);
-            if (fileName.ToLower().Contains(".jpg") || fileName.Contains(".jpeg"))
-                bm.Save(name + "/TEMP/" + Path.GetFileName(fileName) + ".smll", System.Drawing.Imaging.ImageFormat.Jpeg);
-            if (fileName.ToLower().Contains(".png"))
-                bm.Save(name + "/TEMP/" + Path.GetFileName(fileName) + ".smll", System.Drawing.Imaging.ImageFormat.Png);
-            imageToConv.Dispose();
-            return 1;
-        }
-        return 0;
-    }
 }

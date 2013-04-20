@@ -20,9 +20,9 @@ namespace Client
     {
         static bool workFlag = false;
         static int BLOCK_SIZE = 2048;
-        static string[] fileNames = {""};
-        static string[] downloadNumbers = {""};
+        files filesC;
         delegate void twoStringsList(string[] list, string[] list2);
+        delegate void stringInt(string[] list, int[] list2);
         delegate void stringList(string[] list);
         delegate void stringOne(string str);
         delegate void integerVal(int Value);
@@ -31,37 +31,7 @@ namespace Client
         Bitmap notAv = new Bitmap("previewNotAvailable.bmp");
         string VuploadFileName, VuploadFilePath, VdownloadFileName, VdownloadFilePath;
 
-        private void updateMiniatures(socketEngine mySock)
-        {
-            mySock.sendMessage("name");
-            string path = mySock.receiveMessage();
-            mySock.sendMessage("length");
-            long length = 0;
-            try
-            {
-                length = Convert.ToInt64(mySock.receiveMessage());
-            }
-            catch
-            {
-                MessageBox.Show("Ошибка при передаче");
-            }
-
-            if (File.Exists(path) == false)
-            {
-                mySock.sendMessage("file");
-                FileStream fl = File.OpenWrite(path);
-                Console.WriteLine(length.ToString());
-                for (int i = 0; i < length; i += BLOCK_SIZE)
-                {
-                    byte[] bt = new byte[BLOCK_SIZE];
-                    mySock.socket.Receive(bt, 0, BLOCK_SIZE, System.Net.Sockets.SocketFlags.None);
-                    fl.Write(bt, 0, BLOCK_SIZE);
-                }
-                fl.Close();
-            }
-            else
-                mySock.sendMessage("exist");
-        }
+    
         public ClientWindow()
         {
             InitializeComponent();
@@ -69,78 +39,67 @@ namespace Client
 
         private void updateFileList()
         {
-            int count = 0;
             try
             {
-                scktEngine.sendMessage("file list");
-                if (scktEngine.receiveMessage().Contains("miniatures"))
+                miniatures minis = new miniatures();
+                scktEngine.sendMessage("miniatures");
+                string answer = scktEngine.receiveMessage();
+                if (answer.CompareTo("take miniatures") == 0)
                 {
-                    scktEngine.sendMessage("ready to obtain miniatures");
-                    if (scktEngine.receiveMessage().Contains("count"))
-                    {
-                        scktEngine.sendMessage("OK");
-                        count = Convert.ToInt32(scktEngine.receiveMessage());
-                        scktEngine.sendMessage("OK");
-                    }
-                    while (scktEngine.receiveMessage().Contains("miniature"))
-                        updateMiniatures(scktEngine);
+                    scktEngine.sendMessage("start to take");
+                    minis.receiveMiniatures(scktEngine);
+                    answer = scktEngine.receiveMessage();
+                    if (answer.CompareTo("successfully sended") == 0)
+                        minis.saveMiniatures(memoryStatic.login + "/TEMP/");
+                    else
+                        MessageBox.Show(answer);
                 }
-                string msg = "";
-                scktEngine.sendMessage("OK");
-                if (scktEngine.receiveMessage().Contains("file list") == true)
+                else
+                    MessageBox.Show(answer);
+                scktEngine.sendMessage("file list");
+                filesC = new files();
+                answer = scktEngine.receiveMessage();
+                if (answer.CompareTo("take file list") == 0)
                 {
-                    scktEngine.sendMessage("length");
-                    msg = scktEngine.receiveMessage();
-                    int length = 0;
-                    try
+                    scktEngine.sendMessage("ready to receive");
+                    filesC.receiveFileList(scktEngine);
+                    if (scktEngine.receiveMessage().CompareTo("successfull file list") != 0)
                     {
-                        length = Convert.ToInt32(msg);
+                        MessageBox.Show(answer);
                     }
-                    catch
+                    else
                     {
-                        length = 0;
-                    }
-                    fileNames = new string[length];
-                    downloadNumbers = new string[length];
-                    scktEngine.sendMessage("files");
-                    for (int i = 0; i < length; i++)
-                    {
-                        msg = scktEngine.receiveMessage();
-                        downloadNumbers[i] = msg;
-                        scktEngine.sendMessage("file name");
-                        msg = scktEngine.receiveMessage();
-                        fileNames[i] = msg;
-                        scktEngine.sendMessage("OK");
-                    }
-
-                    twoStringsList lst = (files, numbers) =>
-                    {
-                        serverFileTree.Rows.Clear();
-                        for (int i = 0; i < files.Length; i++)
+                        stringInt lst = (files, numbers) =>
                         {
-                            serverFileTree.Rows.Add(1);
-                            serverFileTree.Rows[i].Cells[0].Value = files[i];
-                            serverFileTree.Rows[i].Cells[1].Value = numbers[i];
-                        }
-                        serverFileTree.Cursor = Cursors.Hand;
-                    };
- 
-                    serverFileTree.Invoke(lst, (object)fileNames, (object)downloadNumbers);
-                    empty enbl = () => { update.Enabled = true; };
-                    update.Invoke(enbl);
-               }
+                            serverFileTree.Rows.Clear();
+                            for (int i = 0; i < files.Length; i++)
+                            {
+                                serverFileTree.Rows.Add(1);
+                                serverFileTree.Rows[i].Cells[0].Value = files[i];
+                                serverFileTree.Rows[i].Cells[1].Value = numbers[i];
+                            }
+                            serverFileTree.Cursor = Cursors.Hand;
+                        };
+
+                        serverFileTree.Invoke(lst, filesC.listOfFiles.fileNames, filesC.listOfFiles.downloadNumbers);
+                        empty enbl = () => { update.Enabled = true; };
+                        update.Invoke(enbl);
+                        empty sort = () =>
+                        {
+                            serverFileTree.Sort(serverFileTree.Columns[1], ListSortDirection.Descending);
+                            update.Enabled = true;
+                        };
+                        serverFileTree.Invoke(sort);
+                        workFlag = false;
+                    }
+                }
+                else
+                    MessageBox.Show(scktEngine.receiveMessage());
             }
-            catch (FormatException ex)
+            catch(Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Error to update file list: " + ex.Message);
             }
-            empty sort = () =>
-            {
-                serverFileTree.Sort(serverFileTree.Columns[1], ListSortDirection.Descending);
-                update.Enabled = true;
-            };
-            serverFileTree.Invoke(sort);
-            workFlag = false;
             Thread.CurrentThread.Abort();
         }
 
@@ -298,6 +257,7 @@ namespace Client
 
         private void update_Click(object sender, EventArgs e)
         {
+            Console.WriteLine(memoryStatic.login);
             workFlag = true;
             update.Enabled = false;
             Thread lst = new Thread(updateFileList);
@@ -318,7 +278,11 @@ namespace Client
                 privileges.ForeColor = Color.FromArgb(255, 128, 50, 248);
                 privileges.Text = "Главный администратор";
             }
-            Console.WriteLine("CREATED");
+            if (memoryStatic.privileges == 5)
+            {
+                privileges.ForeColor = Color.FromArgb(255, 74, 211, 25);
+                privileges.Text = "Пользователь";
+            }
             scktEngine = memoryStatic.sock;
             name.Text = memoryStatic.login;
             if (Directory.Exists(name.Text) == false)
@@ -355,13 +319,13 @@ namespace Client
                 serverFileTree.Rows.Clear();
                 int rowsCount = 0;
      
-                for (int i = 0; i < fileNames.Length; i++)
+                for (int i = 0; i < filesC.listOfFiles.fileNames.Length; i++)
                 {
-                    if (fileNames[i].Contains(searchText.Text) == true)
+                    if (filesC.listOfFiles.fileNames[i].Contains(searchText.Text) == true)
                     {
                         serverFileTree.Rows.Add(1);
-                        serverFileTree.Rows[rowsCount].Cells[0].Value = fileNames[i];
-                        serverFileTree.Rows[rowsCount].Cells[1].Value = downloadNumbers[i];
+                        serverFileTree.Rows[rowsCount].Cells[0].Value = filesC.listOfFiles.fileNames[i];
+                        serverFileTree.Rows[rowsCount].Cells[1].Value = filesC.listOfFiles.downloadNumbers[i];
                         rowsCount++;
                     }
                 }
@@ -388,10 +352,11 @@ namespace Client
                         string previewPath = name.Text + "\\TEMP\\" + VdownloadFileName + ".smll";
                         Bitmap preview;
                         if (File.Exists(previewPath))
-                            preview = new Bitmap(previewPath);
-                        else
-                            preview = notAv;
-                        previewPicture.Image = preview;
+                        {
+                            FileStream fs = File.OpenRead(previewPath);
+                            previewPicture.Image = Image.FromStream(fs);
+                            fs.Close();
+                        }
                     }
                 }
             }

@@ -13,7 +13,6 @@ namespace Client
 {
     public partial class Authentication : Form
     {
-        int BLOCK_SIZE = 2048;
         socketEngine mySock = new socketEngine();
         captcha myCaptch = new captcha();
         userInfo currentUser = new userInfo();
@@ -65,7 +64,7 @@ namespace Client
                 string answer = mySock.receiveMessage();
                 if (answer.CompareTo("ready to accept user") == 0)
                 {
-                    currentUser.Send(mySock.socket);
+                    currentUser.Send(mySock);
                     answer = mySock.receiveMessage();
                     if (answer.CompareTo("successfully accept user") == 0)
                         checkUser(); //check login and password
@@ -98,7 +97,8 @@ namespace Client
                 string answer = mySock.receiveMessage();
                 if (answer.CompareTo("take user info") == 0)
                 {
-                    currentUser.Receive(mySock.socket);
+                    mySock.sendMessage("ready to take");
+                    currentUser.Receive(mySock);
                     if (currentUser.checkUser == true)
                     {
                         openClient();
@@ -171,7 +171,7 @@ namespace Client
                                 {
                                     currentUser.login = login.Text;
                                     currentUser.password = password.Text;
-                                    currentUser.Send(mySock.socket);
+                                    currentUser.Send(mySock);
                                     answer = mySock.receiveMessage();
                                     if (answer.CompareTo("successfully registration") == 0)
                                     {

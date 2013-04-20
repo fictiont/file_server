@@ -29,6 +29,8 @@
         private void InitializeComponent()
         {
             this.groupServerControls = new System.Windows.Forms.GroupBox();
+            this.privileges = new System.Windows.Forms.Label();
+            this.name = new System.Windows.Forms.Label();
             this.update = new System.Windows.Forms.Button();
             this.fileMode = new System.Windows.Forms.TabControl();
             this.Download = new System.Windows.Forms.TabPage();
@@ -49,18 +51,16 @@
             this.uploadFile = new System.Windows.Forms.Button();
             this.uploadFileName = new System.Windows.Forms.TextBox();
             this.chooseFile = new System.Windows.Forms.Button();
+            this.Administrator = new System.Windows.Forms.TabPage();
+            this.label2 = new System.Windows.Forms.Label();
+            this.filesDelTxt = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.filesDelBtn = new System.Windows.Forms.Button();
             this.chooseUploadFile = new System.Windows.Forms.OpenFileDialog();
             this.saveDownloadFile = new System.Windows.Forms.FolderBrowserDialog();
             this.previewPicture = new System.Windows.Forms.PictureBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.eventLog1 = new System.Diagnostics.EventLog();
-            this.name = new System.Windows.Forms.Label();
-            this.privileges = new System.Windows.Forms.Label();
-            this.Administrator = new System.Windows.Forms.TabPage();
-            this.filesDelBtn = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.filesDelTxt = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.groupServerControls.SuspendLayout();
             this.fileMode.SuspendLayout();
             this.Download.SuspendLayout();
@@ -68,10 +68,10 @@
             this.saveFileControls.SuspendLayout();
             this.Upload.SuspendLayout();
             this.groupFileControls.SuspendLayout();
+            this.Administrator.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.previewPicture)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.eventLog1)).BeginInit();
-            this.Administrator.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupServerControls
@@ -86,9 +86,27 @@
             this.groupServerControls.TabStop = false;
             this.groupServerControls.Text = "Серверные опции";
             // 
+            // privileges
+            // 
+            this.privileges.AutoSize = true;
+            this.privileges.Location = new System.Drawing.Point(6, 22);
+            this.privileges.Name = "privileges";
+            this.privileges.Size = new System.Drawing.Size(80, 13);
+            this.privileges.TabIndex = 11;
+            this.privileges.Text = "Пользователь";
+            // 
+            // name
+            // 
+            this.name.AutoSize = true;
+            this.name.Location = new System.Drawing.Point(135, 22);
+            this.name.Name = "name";
+            this.name.Size = new System.Drawing.Size(39, 13);
+            this.name.TabIndex = 10;
+            this.name.Text = "default";
+            // 
             // update
             // 
-            this.update.Location = new System.Drawing.Point(6, 45);
+            this.update.Location = new System.Drawing.Point(9, 54);
             this.update.Name = "update";
             this.update.Size = new System.Drawing.Size(159, 23);
             this.update.TabIndex = 9;
@@ -298,6 +316,56 @@
             this.chooseFile.UseVisualStyleBackColor = true;
             this.chooseFile.Click += new System.EventHandler(this.chooseFile_Click);
             // 
+            // Administrator
+            // 
+            this.Administrator.Controls.Add(this.label2);
+            this.Administrator.Controls.Add(this.filesDelTxt);
+            this.Administrator.Controls.Add(this.label1);
+            this.Administrator.Controls.Add(this.filesDelBtn);
+            this.Administrator.Location = new System.Drawing.Point(4, 22);
+            this.Administrator.Name = "Administrator";
+            this.Administrator.Size = new System.Drawing.Size(454, 369);
+            this.Administrator.TabIndex = 2;
+            this.Administrator.Text = "Administrator";
+            this.Administrator.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(382, 25);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(31, 13);
+            this.label2.TabIndex = 3;
+            this.label2.Text = "дней";
+            // 
+            // filesDelTxt
+            // 
+            this.filesDelTxt.Location = new System.Drawing.Point(323, 22);
+            this.filesDelTxt.MaxLength = 5;
+            this.filesDelTxt.Name = "filesDelTxt";
+            this.filesDelTxt.Size = new System.Drawing.Size(53, 20);
+            this.filesDelTxt.TabIndex = 2;
+            this.filesDelTxt.Text = "1";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(95, 25);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(233, 13);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "все файлы, которые не скачивались более: ";
+            // 
+            // filesDelBtn
+            // 
+            this.filesDelBtn.Location = new System.Drawing.Point(14, 22);
+            this.filesDelBtn.Name = "filesDelBtn";
+            this.filesDelBtn.Size = new System.Drawing.Size(75, 23);
+            this.filesDelBtn.TabIndex = 0;
+            this.filesDelBtn.Text = "Удалить";
+            this.filesDelBtn.UseVisualStyleBackColor = true;
+            this.filesDelBtn.Click += new System.EventHandler(this.filesDel_Click);
+            // 
             // chooseUploadFile
             // 
             this.chooseUploadFile.FileName = "Choose file to upload...";
@@ -327,74 +395,6 @@
             // 
             this.eventLog1.SynchronizingObject = this;
             // 
-            // name
-            // 
-            this.name.AutoSize = true;
-            this.name.Location = new System.Drawing.Point(135, 22);
-            this.name.Name = "name";
-            this.name.Size = new System.Drawing.Size(39, 13);
-            this.name.TabIndex = 10;
-            this.name.Text = "default";
-            // 
-            // privileges
-            // 
-            this.privileges.AutoSize = true;
-            this.privileges.Location = new System.Drawing.Point(6, 22);
-            this.privileges.Name = "privileges";
-            this.privileges.Size = new System.Drawing.Size(80, 13);
-            this.privileges.TabIndex = 11;
-            this.privileges.Text = "Пользователь";
-            // 
-            // Administrator
-            // 
-            this.Administrator.Controls.Add(this.label2);
-            this.Administrator.Controls.Add(this.filesDelTxt);
-            this.Administrator.Controls.Add(this.label1);
-            this.Administrator.Controls.Add(this.filesDelBtn);
-            this.Administrator.Location = new System.Drawing.Point(4, 22);
-            this.Administrator.Name = "Administrator";
-            this.Administrator.Size = new System.Drawing.Size(454, 369);
-            this.Administrator.TabIndex = 2;
-            this.Administrator.Text = "Administrator";
-            this.Administrator.UseVisualStyleBackColor = true;
-            // 
-            // filesDelBtn
-            // 
-            this.filesDelBtn.Location = new System.Drawing.Point(14, 22);
-            this.filesDelBtn.Name = "filesDelBtn";
-            this.filesDelBtn.Size = new System.Drawing.Size(75, 23);
-            this.filesDelBtn.TabIndex = 0;
-            this.filesDelBtn.Text = "Удалить";
-            this.filesDelBtn.UseVisualStyleBackColor = true;
-            this.filesDelBtn.Click += new System.EventHandler(this.filesDel_Click);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(95, 25);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(233, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "все файлы, которые не скачивались более: ";
-            // 
-            // filesDelTxt
-            // 
-            this.filesDelTxt.Location = new System.Drawing.Point(323, 22);
-            this.filesDelTxt.MaxLength = 5;
-            this.filesDelTxt.Name = "filesDelTxt";
-            this.filesDelTxt.Size = new System.Drawing.Size(53, 20);
-            this.filesDelTxt.TabIndex = 2;
-            this.filesDelTxt.Text = "1";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(382, 25);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(31, 13);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "дней";
-            // 
             // ClientWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -420,11 +420,11 @@
             this.Upload.ResumeLayout(false);
             this.groupFileControls.ResumeLayout(false);
             this.groupFileControls.PerformLayout();
+            this.Administrator.ResumeLayout(false);
+            this.Administrator.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.previewPicture)).EndInit();
             this.groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.eventLog1)).EndInit();
-            this.Administrator.ResumeLayout(false);
-            this.Administrator.PerformLayout();
             this.ResumeLayout(false);
 
         }

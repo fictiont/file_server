@@ -183,7 +183,6 @@ public class socketEngine
                     while (recCnt != buffCnt)
                         recCnt += s.Receive(msg, recCnt, buffCnt - recCnt, SocketFlags.None);
                     result = Encoding.UTF8.GetString(msg);
-                    ConsoleWrite("RECEIVED: " + result);
                     return result;
                 }
                 catch (Exception ex)
@@ -218,7 +217,6 @@ public class socketEngine
                 {
                     throw new ArgumentException("Connection aborted, receiving failed: " + ex.Message);
                 }
-                ConsoleWrite("SENT: " + message);
             }
             else
                 throw new ArgumentException("Connection is not available");
