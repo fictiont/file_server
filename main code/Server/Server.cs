@@ -259,6 +259,7 @@ class Program
                             FileInfo fileInf = new FileInfo(currentUser.login + "/" + fileName);
                             fileInf.LastAccessTime = DateTime.Now;
                             break;
+
                         case "file download":
                             int downloadsCount = 0;
                             string flName = "";
